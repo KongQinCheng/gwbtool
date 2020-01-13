@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Insert title here</title>
+</head>
+<body>
+<form name="firForm" action="/upload/upload" method="post"  enctype="multipart/form-data">
+    <h1>导出Excel文件</h1>
+    <input type="file" name="file" multiple>
+    <input type="submit" value="upload"/>
+</form>
+
+
+<form name="serForm" action="/upload/upload2" method="post"  enctype="multipart/form-data">
+    <h1>直接显示</h1>
+    <input type="file"  name="file" id="file" onchange="importExp(event)" multiple>
+
+</form>
+
+<style>
+    .sdiv{
+        width: 80px;border: 1px solid black;float: left;background-color: lawngreen;
+        height: 65px;
+       line-height:65px;
+
+    }
+    .std{
+        width: 80px;border: 1px solid black;float: left;
+        height: 65px;
+        line-height:65px;
+    }
+
+</style>
+
+<div style="text-align: center;float: left" id="resulthtml">
+
+</div>
+
+
+<div style="width: 100%;height: 2px;float: left"></div>
+<div style="text-align: center;float: left">
+    <table width="1100px;">
+        <tr>
+            <td class="sdiv">NO.</td>
+            <td class="sdiv" style="width: 200px; line-height:30px;">Model Description (YANKON)</td>
+            <td class="sdiv" style="line-height:20px;">配光Input
+                Voltage
+                (V)</td>
+            <td class="sdiv" style="line-height:20px;">配光Input
+                Wattage
+                (W)</td>
+            <td class="sdiv" style="line-height:20px;">配光Input
+                Current
+                (A)</td>
+            <td class="sdiv">配光PF</td>
+            <td class="sdiv" style="line-height:20px;">配光Φ_Total(lm)</td>
+            <td class="sdiv">配光CBCP</td>
+            <td class="sdiv">配光K值</td>
+            <td class="sdiv" style="line-height:30px;">配光90°Φ_Total(lm)</td>
+            <td class="sdiv">配光角度</td>
+        </tr>
+        <tr id="innet">
+            <td class="std">1</td>
+            <td class="std" style="width: 200px; line-height:30px;" id="name"></td>
+            <td class="std" id="Uvlaue"></td>
+            <td class="std" id="Pvalue"></td>
+            <td class="std" id="Ivalue"></td>
+            <td class="std" id="PFvalue"></td>
+
+            <td class="std" id="Total"></td>
+            <td class="std" id="TotalCBCP"></td>
+            <td class="std" id="kvalue"></td>
+
+            <td class="std" id="peiguan90"></td>
+            <td class="std" id="peiguanjiaodu"></td>
+
+        </tr>
+
+    </table>
+
+
+</div>
+
+
+
+<script  src="../jquery-3.3.1.min.js"></script>
+
+
+<script type="text/javascript">
+
+
+    //导入文件
+    function importExp(event) {
+        var formData = new FormData();
+        var name = $("#file").val();
+        formData.append("name",name);
+        for (var i = 0; i <event.target.files.length ; i++) {
+            formData.append("file",$("#file")[0].files[i]);
+        }
+
+        $.ajax({
+            url : '/upload/upload2',
+            type : 'POST',
+            async : false,
+            data : formData,
+            // 告诉jQuery不要去处理发送的数据
+            processData : false,
+            // 告诉jQuery不要去设置Content-Type请求头
+            contentType : false,
+            beforeSend:function(){
+                console.log("正在进行，请稍候");
+            },
+            success : function(responseStr) {
+                var json_big = eval('(' + responseStr + ')');
+                console.log(json_big);
+                var tempHtml ="";
+                for (var i = 0; i <event.target.files.length ; i++) {
+                    var json =   json_big[i];
+                     var num=i*1+1
+
+                    tempHtml +="<td class='std'>"+ num +"</td>"
+                    tempHtml +="<td class='std' style='width: 200px; line-height:30px;'>"+json.name  +"</td>"
+                    tempHtml +="<td class='std' >"+json.Uvlaue  +"</td>"
+                    tempHtml +="<td class='std' >"+json.Pvalue +"</td>"
+                    tempHtml +="<td class='std' >"+json.Ivalue +"</td>"
+                    tempHtml +="<td class='std' >"+json.PFvalue +"</td>"
+
+
+                    tempHtml +="<td class='std' >"+json.Total +"</td>"
+                    tempHtml +="<td class='std' >"+json.TotalCBCP +"</td>"
+                    tempHtml +="<td class='std' >"+json.kvalue +"</td>"
+
+                    tempHtml +="<td class='std' >"+json.peiguan90 +"</td>"
+                    tempHtml +="<td class='std' >"+json.peiguanjiaodu +"</td>"
+
+
+                }
+                $("#innet").html(tempHtml)
+
+
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

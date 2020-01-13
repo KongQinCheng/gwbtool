@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <title>物料编码管理</title>
+</head>
+<body>
+
+<div style="width: 100%;height: 30px;">
+    <div style="width: 100%;float: left;border: 1px bisque solid;">
+        导入所有数据
+        <input type="file"  name="file" id="file" onchange="importExp(event)" multiple>
+    </div>
+    <div style="width: 100%;float: left;border: 1px #000 solid;">
+        <input style="width: 100px;height: 30px;" value="展示所有数据" onclick="getAllData()" type="button">
+    </div>
+    <div style="width: 100%;float: left;border: 1px bisque solid;">
+        <a href="/checkCode/downLoadData"> <input style="width: 100px;height: 30px;" value="导出已有的数据" type="button"></a>
+    </div>
+
+    <div style="width: 100%;float: left;border: 1px bisque solid;">
+        <input type="text" id="wlbm" name="wlbm" placeholder="请输入查询的物料编码">
+        <input type="text" id="wlmc" name="wlmc" placeholder="请输入查询的物料名称">
+        <input type="text" id="wlgg" name="wlgg" placeholder="请输入查询的物料规格">
+        <input style="width: 100px;height: 30px;" value="查询所有数据" onclick="getByBaseInfoVo()" type="button">
+         <!--<input style="width: 100px;height: 30px;" value="导出查询数据" type="button" onclick="downexcel()">-->
+    </div>
+
+</div>
+
+<div style="text-align: center;float: left;display: none; width: 300px; height: 30px;" id="upload" >
+    Excel上传中。。。
+</div>
+
+<div style="text-align: center;float: left;width: 100%;" >
+    <table  id="innet" border="2" >
+
+    </table>
+</div>
+
+
+
+
+
+
+<script  src="../jquery-3.3.1.min.js"></script>
+<script type="text/javascript">
+
+
+    //导入文件
+    function importExp(event) {
+
+
+
+        var formData = new FormData();
+        var name = $("#file").val();
+        formData.append("name",name);
+        for (var i = 0; i <event.target.files.length ; i++) {
+            formData.append("file",$("#file")[0].files[i]);
+        }
+
+        $.ajax({
+            url : '/checkCode/upload',
+            type : 'POST',
+            async : false,
+            data : formData,
+            // 告诉jQuery不要去处理发送的数据
+            processData : false,
+            // 告诉jQuery不要去设置Content-Type请求头
+            contentType : false,
+            beforeSend:function(){
+                console.log("正在进行，请稍候");
+                $("#upload").attr('style','display:block');
+            },
+            success : function(responseStr) {
+                $("#upload").attr('style','display:none');
+                var json_big = eval('(' + responseStr + ')');
+                console.log(json_big);
+                var tempHtml ="";
+
+                //{"resultList_exist":[{"wlbm":"28,0","index":0,"isNew":false},{"wlbm":"28,0,1,1,1,1,1,1","index":1,"isNew":false},{"wlbm":"30","index":2,"isNew":false},{"wlbm":"3","index":3,"isNew":false}],"resultList_insert":[]}
+
+                var resultList_insert =json_big.resultList_insert;
+                var resultList_exist =json_big.resultList_exist;
+
+
+                for (var i = 0; i <resultList_exist.length ; i++) {
+                    var wlbm =   resultList_exist[i].wlbm;
+                    var row =   resultList_exist[i].index;
+                    var wlgg =   resultList_exist[i].wlgg;
+
+                    tempHtml +="<tr><td class='std' style='text-align: left'>Excel表格中的行数："+ parseInt(++row); +"</td>"
+                    tempHtml +="<td class='std' style='text-align: left'>, 和当前相同的物料编码："+ wlbm +"</td>"
+                    tempHtml +="<td class='std' style='text-align: left'>, 物料规格："+ wlgg +"</td></tr>"
+                }
+
+                $("#innet").html(tempHtml)
+                alert("上传成功")
+            }
+        });
+    }
+    
+    function getAllData() {
+
+        $.ajax({
+            type: "post",
+            async: true,
+            url: "/checkCode/getAll",
+            data: {},
+            dataType: "text",        //返回数据形式为json
+            contentType: "application/json",
+            success: function (result) {
+                var jsonObj = JSON.parse(result);//转换为json对象
+                var tempHtml = gethtml(jsonObj);
+                $("#innet").html(tempHtml)
+            },
+            error: function (errorMsg) {
+                //请求失败时执行该函数
+                alert("图表请求数据失败!");
+            }
+        })
+    }
+
+    function getByBaseInfoVo() {
+
+        var str = { "wlmc": $("#wlmc").val(), "wlbm": $("#wlbm").val(), "wlgg": $("#wlgg").val()}
+
+        $.ajax({
+            type: "post",
+            async: true,
+            url: "/checkCode/getByBaseInfoVo",
+            data: JSON.stringify(str),
+            dataType: "text",        //返回数据形式为json
+            contentType: "application/json",
+            success: function (result) {
+                var jsonObj = JSON.parse(result);//转换为json对象
+                var tempHtml = gethtml(jsonObj);
+                $("#innet").html(tempHtml)
+            },
+            error: function (errorMsg) {
+                //请求失败时执行该函数
+                alert("图表请求数据失败!");
+            }
+        })
+    }
+
+
+    function gethtml(jsonObj) {
+        var tempHtml = "";
+        for (var i = 0; i < jsonObj.length; i++) {
+            var id =   jsonObj[i].id;
+            var wlbm =   jsonObj[i].wlbm;
+            var wlgg =   jsonObj[i].wlgg;
+            var wlmc =   jsonObj[i].wlmc;
+            var wlgys =   jsonObj[i].wlgys;
+            tempHtml +="<tr>"
+            tempHtml +="<td class='std' style='text-align: left'>"+ i +"</td>"
+            tempHtml +="<td class='std' style='text-align: left'>"+ wlbm +"</td>"
+            tempHtml +="<td class='std' style='text-align: left'>"+ wlmc +"</td>"
+            tempHtml +="<td class='std' style='text-align: left'>"+ wlgg +"</td>"
+            tempHtml +="<td class='std' style='text-align: left'>"+ wlgys +"</td>"
+            tempHtml +="<td class='std' style='text-align: left'><input type='button' onclick='delBaseinfo("+id+")' value='删除'></td>"
+            tempHtml +="</tr>"
+
+        }
+        return tempHtml;
+    }
+
+    function delBaseinfo(id) {
+        var str = {  "id": id}
+        $.ajax({
+            type: "post",
+            async: true,
+            url: "/checkCode/delBaseInfo",
+            data: JSON.stringify(str),
+            dataType: "text",        //返回数据形式为json
+            contentType: "application/json",
+            success: function (result) {
+               alert("删除成功")
+            },
+            error: function (errorMsg) {
+                //请求失败时执行该函数
+                alert("图表请求数据失败!");
+            }
+        })
+    }
+    function downexcel() {
+
+            var str = { "wlmc": $("#wlmc").val(), "wlbm": $("#wlbm").val(), "wlgg": $("#wlgg").val()}
+
+           $.post("/checkCode/downLoadDataSearch", JSON.stringify(str),ssss(),"application/json;charset:utf-8" );
+
+
+
+    }
+    function ssss() {
+
+    }
+
+</script>
+</body>
+</html>
